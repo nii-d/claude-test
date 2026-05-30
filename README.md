@@ -1,1 +1,3 @@
 # claude-test
+
+claudeをテストするためのリポジトリ
