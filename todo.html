@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 540px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: #111;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .input-row input {
+      flex: 1;
+      padding: 10px 14px;
+      font-size: 1rem;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .input-row input:focus { border-color: #4f7df3; }
+
+    .input-row button {
+      padding: 10px 18px;
+      font-size: 1rem;
+      background: #4f7df3;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .input-row button:hover { background: #3a68e0; }
+
+    .filters {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .filters button {
+      padding: 5px 14px;
+      font-size: 0.85rem;
+      border: 1.5px solid #ddd;
+      border-radius: 20px;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filters button.active {
+      background: #4f7df3;
+      border-color: #4f7df3;
+      color: #fff;
+    }
+
+    ul { list-style: none; }
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+
+    li input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #4f7df3;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    li span {
+      flex: 1;
+      font-size: 0.95rem;
+      word-break: break-all;
+    }
+
+    li.done span {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+
+    li button.del {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+
+    li button.del:hover { color: #e55; }
+
+    .footer {
+      margin-top: 16px;
+      font-size: 0.82rem;
+      color: #aaa;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer button {
+      background: none;
+      border: none;
+      color: #bbb;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .footer button:hover { color: #888; }
+
+    .empty {
+      text-align: center;
+      color: #ccc;
+      padding: 32px 0;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Todo</h1>
+  <div class="input-row">
+    <input id="new-todo" type="text" placeholder="新しいタスクを入力…" autocomplete="off">
+    <button onclick="addTodo()">追加</button>
+  </div>
+  <div class="filters">
+    <button class="active" onclick="setFilter('all', this)">すべて</button>
+    <button onclick="setFilter('active', this)">未完了</button>
+    <button onclick="setFilter('done', this)">完了済み</button>
+  </div>
+  <ul id="list"></ul>
+  <div class="footer">
+    <span id="count"></span>
+    <button onclick="clearDone()">完了済みを削除</button>
+  </div>
+</div>
+
+<script>
+  let todos = JSON.parse(localStorage.getItem('todos') || '[]');
+  let filter = 'all';
+
+  function save() {
+    localStorage.setItem('todos', JSON.stringify(todos));
+  }
+
+  function render() {
+    const list = document.getElementById('list');
+    const visible = todos.filter(t =>
+      filter === 'all' ? true : filter === 'done' ? t.done : !t.done
+    );
+
+    if (visible.length === 0) {
+      list.innerHTML = '<li class="empty" style="background:none;box-shadow:none;">タスクはありません</li>';
+    } else {
+      list.innerHTML = visible.map(t => `
+        <li class="${t.done ? 'done' : ''}" data-id="${t.id}">
+          <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggle(${t.id})">
+          <span>${escHtml(t.text)}</span>
+          <button class="del" onclick="remove(${t.id})" title="削除">×</button>
+        </li>
+      `).join('');
+    }
+
+    const remaining = todos.filter(t => !t.done).length;
+    document.getElementById('count').textContent = `残り ${remaining} 件`;
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function addTodo() {
+    const input = document.getElementById('new-todo');
+    const text = input.value.trim();
+    if (!text) return;
+    todos.unshift({ id: Date.now(), text, done: false });
+    input.value = '';
+    save();
+    render();
+  }
+
+  function toggle(id) {
+    const t = todos.find(t => t.id === id);
+    if (t) { t.done = !t.done; save(); render(); }
+  }
+
+  function remove(id) {
+    todos = todos.filter(t => t.id !== id);
+    save();
+    render();
+  }
+
+  function clearDone() {
+    todos = todos.filter(t => !t.done);
+    save();
+    render();
+  }
+
+  function setFilter(f, btn) {
+    filter = f;
+    document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  document.getElementById('new-todo').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addTodo();
+  });
+
+  render();
+</script>
+</body>
+</html>
