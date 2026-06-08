@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>健康記録</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 640px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: #111;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      margin-bottom: 14px;
+      color: #555;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 4px; }
+
+    .field.full { grid-column: 1 / -1; }
+
+    label { font-size: 0.8rem; color: #888; }
+
+    input, textarea, select {
+      padding: 9px 12px;
+      font-size: 0.95rem;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+
+    input:focus, textarea:focus, select:focus { border-color: #4f9d7d; }
+
+    textarea { resize: vertical; min-height: 60px; }
+
+    .save-btn {
+      padding: 10px 20px;
+      font-size: 0.95rem;
+      background: #4f9d7d;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .save-btn:hover { background: #3d7e64; }
+
+    .chart-wrap { position: relative; height: 220px; }
+
+    ul { list-style: none; }
+
+    li {
+      background: #fff;
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+
+    .entry-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .entry-date { font-weight: 700; font-size: 0.95rem; }
+
+    .entry-stats {
+      display: flex;
+      gap: 14px;
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .entry-stats span b { color: #4f9d7d; }
+
+    .entry-memo {
+      font-size: 0.88rem;
+      color: #555;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .del {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+
+    .del:hover { color: #e55; }
+
+    .empty {
+      text-align: center;
+      color: #ccc;
+      padding: 32px 0;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>健康記録</h1>
+
+  <div class="card">
+    <h2>今日の記録を追加</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label for="date">日付</label>
+        <input type="date" id="date">
+      </div>
+      <div class="field">
+        <label for="weight">体重 (kg)</label>
+        <input type="number" id="weight" step="0.1" placeholder="例: 60.5">
+      </div>
+      <div class="field">
+        <label for="sleep">睡眠時間 (時間)</label>
+        <input type="number" id="sleep" step="0.5" placeholder="例: 7.5">
+      </div>
+      <div class="field">
+        <label for="mood">気分・体調</label>
+        <select id="mood">
+          <option value="">選択しない</option>
+          <option value="絶好調">😄 絶好調</option>
+          <option value="良い">🙂 良い</option>
+          <option value="普通">😐 普通</option>
+          <option value="やや不調">😔 やや不調</option>
+          <option value="不調">😣 不調</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label for="memo">備考</label>
+        <textarea id="memo" placeholder="自由にメモを記入…"></textarea>
+      </div>
+    </div>
+    <button class="save-btn" onclick="saveEntry()">保存</button>
+  </div>
+
+  <div class="card">
+    <h2>体重・睡眠時間の推移</h2>
+    <div class="chart-wrap"><canvas id="chart"></canvas></div>
+  </div>
+
+  <ul id="list"></ul>
+</div>
+
+<script>
+  let entries = JSON.parse(localStorage.getItem('healthEntries') || '[]');
+  let chart;
+
+  document.getElementById('date').valueAsDate = new Date();
+
+  function save() {
+    localStorage.setItem('healthEntries', JSON.stringify(entries));
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function saveEntry() {
+    const date = document.getElementById('date').value;
+    if (!date) { alert('日付を入力してください'); return; }
+
+    const weight = document.getElementById('weight').value;
+    const sleep = document.getElementById('sleep').value;
+    const mood = document.getElementById('mood').value;
+    const memo = document.getElementById('memo').value.trim();
+
+    entries = entries.filter(e => e.date !== date);
+    entries.push({
+      date,
+      weight: weight ? parseFloat(weight) : null,
+      sleep: sleep ? parseFloat(sleep) : null,
+      mood,
+      memo
+    });
+    entries.sort((a, b) => a.date.localeCompare(b.date));
+
+    save();
+    document.getElementById('weight').value = '';
+    document.getElementById('sleep').value = '';
+    document.getElementById('mood').value = '';
+    document.getElementById('memo').value = '';
+
+    render();
+  }
+
+  function removeEntry(date) {
+    entries = entries.filter(e => e.date !== date);
+    save();
+    render();
+  }
+
+  function renderChart() {
+    const labels = entries.map(e => e.date);
+    const weightData = entries.map(e => e.weight);
+    const sleepData = entries.map(e => e.sleep);
+
+    if (chart) chart.destroy();
+    chart = new Chart(document.getElementById('chart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: '体重 (kg)',
+            data: weightData,
+            borderColor: '#4f9d7d',
+            backgroundColor: '#4f9d7d',
+            yAxisID: 'y',
+            tension: 0.25,
+            spanGaps: true
+          },
+          {
+            label: '睡眠時間 (時間)',
+            data: sleepData,
+            borderColor: '#4f7df3',
+            backgroundColor: '#4f7df3',
+            yAxisID: 'y1',
+            tension: 0.25,
+            spanGaps: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { type: 'linear', position: 'left', title: { display: true, text: '体重 (kg)' } },
+          y1: { type: 'linear', position: 'right', title: { display: true, text: '睡眠時間 (h)' }, grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+  }
+
+  function renderList() {
+    const list = document.getElementById('list');
+    if (entries.length === 0) {
+      list.innerHTML = '<li class="empty" style="box-shadow:none;">まだ記録がありません</li>';
+      return;
+    }
+
+    const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+    list.innerHTML = sorted.map(e => `
+      <li>
+        <div class="entry-head">
+          <span class="entry-date">${e.date}</span>
+          <button class="del" onclick="removeEntry('${e.date}')" title="削除">×</button>
+        </div>
+        <div class="entry-stats">
+          ${e.weight !== null ? `<span>体重: <b>${e.weight} kg</b></span>` : ''}
+          ${e.sleep !== null ? `<span>睡眠: <b>${e.sleep} h</b></span>` : ''}
+          ${e.mood ? `<span>気分: <b>${escHtml(e.mood)}</b></span>` : ''}
+        </div>
+        ${e.memo ? `<div class="entry-memo">${escHtml(e.memo)}</div>` : ''}
+      </li>
+    `).join('');
+  }
+
+  function render() {
+    renderChart();
+    renderList();
+  }
+
+  render();
+</script>
+</body>
+</html>
