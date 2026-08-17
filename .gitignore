@@ -1,0 +1,5 @@
+node_modules/
+
+# デッキ生成時の中間ファイル（build_deck.js から再生成可能）
+*.pdf
+slide-*.jpg
