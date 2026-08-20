@@ -215,50 +215,67 @@ divider("1", "なぜ必要か", "弊社が抱える2つの課題と、その解�
 // S7 課題A 規模と実例
 // ============================================================
 {
-  const s = light("年間700件が、部門をまたいで動いています", "課題A：案件管理");
+  const s = light("案件に関わる人は、これからさらに増えます", "課題A：案件管理");
   badge(s, 12.1, 0.52, 0.56, "A", A_COL, 17);
 
-  card(s, ML, 1.72, 4.6, 4.72, SOFT);
-  s.addText("1案件に関わる人", { x: ML + 0.34, y: 1.94, w: 3.9, h: 0.34, fontFace: F,
-    fontSize: 14, bold: true, color: INK, margin: 0 });
-  const roles = ["営業　1〜2名", "運営管理　1〜2名", "講師管理　1名", "講師　1〜2名",
-    "＋ 機材担当部門と連携", "＋ コンテンツ作成部門と連携", "＋ PMO　1名（新設）"];
-  let ry = 2.42;
-  roles.forEach((r, i) => {
-    const isPlus = r.startsWith("＋");
-    s.addShape(pres.ShapeType.ellipse, { x: ML + 0.38, y: ry + 0.075, w: 0.13, h: 0.13,
-      fill: { color: isPlus ? LINE : A_COL } });
-    s.addText(r, { x: ML + 0.66, y: ry, w: 3.7, h: 0.3, fontFace: F, fontSize: 12,
-      color: isPlus ? MUT : TXT, margin: 0, valign: "middle" });
-    ry += 0.42;
-  });
-  s.addText("のべ 6〜8名", { x: ML + 0.34, y: 5.72, w: 3.9, h: 0.46, fontFace: F,
-    fontSize: 20, bold: true, color: A_COL, margin: 0 });
+  card(s, ML, 1.72, 5.5, 4.5, SOFT);
+  s.addText("1案件に関わる人", { x: ML + 0.3, y: 1.9, w: 4.9, h: 0.32, fontFace: F,
+    fontSize: 13.5, bold: true, color: INK, margin: 0 });
 
-  s.addText("700", { x: ML + 5.0, y: 1.78, w: 2.1, h: 0.92, fontFace: F, fontSize: 58,
+  const before = [["営業", "1〜2名", 0], ["運営", "1〜2名", 0], ["講師管理", "1名", 0],
+    ["講師", "1〜2名", 0], ["＋ 教材担当部門と連携", "", 2], ["＋ コンテンツ作成部門と連携", "", 2]];
+  const after = [["営業", "1〜2名", 0], ["運営", "1〜2名", 0], ["講師管理", "1名", 0],
+    ["講師", "1〜2名", 0], ["PMO", "1名", 1], ["コンテンツ制作担当", "1〜2名", 1],
+    ["システム担当", "1名", 1]];
+
+  [["これまで", before, "4〜7名", MUT, ML + 0.3],
+   ["今後", after, "7〜11名", A_COL, ML + 2.95]].forEach(([lab, list, total, col, x]) => {
+    s.addText(lab, { x, y: 2.32, w: 2.4, h: 0.3, fontFace: F, fontSize: 11.5,
+      bold: true, color: col, margin: 0 });
+    let y = 2.7;
+    list.forEach(([nm, cnt, kind]) => {
+      if (kind !== 2) {
+        s.addShape(pres.ShapeType.ellipse, { x: x + 0.04, y: y + 0.09, w: 0.12, h: 0.12,
+          fill: { color: kind === 1 ? ACC : col } });
+      }
+      s.addText(nm + (cnt ? "  " + cnt : ""), { x: x + (kind === 2 ? 0 : 0.26), y,
+        w: 2.4 - (kind === 2 ? 0 : 0.26), h: 0.3, fontFace: F,
+        fontSize: kind === 2 ? 9.5 : 10.5, bold: kind === 1,
+        color: kind === 2 ? "9AA5B4" : (kind === 1 ? INK : MUT), valign: "middle", margin: 0 });
+      y += 0.34;
+    });
+    s.addText("のべ " + total, { x, y: 5.36, w: 2.4, h: 0.42, fontFace: F, fontSize: 16,
+      bold: true, color: col, margin: 0 });
+  });
+  s.addShape(pres.ShapeType.rightArrow, { x: ML + 2.6, y: 2.36, w: 0.24, h: 0.22,
+    fill: { color: LINE } });
+  s.addText("PMO・コンテンツ制作・システム担当が加わり、関係者はさらに増える",
+    { x: ML + 0.3, y: 5.82, w: 4.9, h: 0.32, fontFace: F, fontSize: 10.5, bold: true,
+      color: ACC, margin: 0 });
+
+  s.addText("700", { x: ML + 5.9, y: 1.72, w: 2.1, h: 0.92, fontFace: F, fontSize: 54,
     bold: true, color: A_COL, margin: 0 });
-  s.addText("件 ／ 年", { x: ML + 6.95, y: 2.24, w: 1.6, h: 0.4, fontFace: F, fontSize: 15,
+  s.addText("件 ／ 年", { x: ML + 7.75, y: 2.14, w: 1.6, h: 0.4, fontFace: F, fontSize: 15,
     bold: true, color: MUT, margin: 0, valign: "middle" });
 
-  s.addText("現に起きたこと", { x: ML + 5.0, y: 2.96, w: 6.4, h: 0.32, fontFace: F,
+  s.addText("現に起きたこと", { x: ML + 5.9, y: 2.86, w: 6.2, h: 0.32, fontFace: F,
     fontSize: 14, bold: true, color: INK, margin: 0 });
   const cases = [
     ["チャットでの依頼を見逃し、期日が守られなかった", "納期"],
     ["教材開発の成果物が、期日になっても出てこない", "納期・部門間の信頼"],
     ["講師選定が遅れ、機材準備が間に合わなかった", "実施品質・顧客信用"],
   ];
-  let cy = 3.5;
+  let cy = 3.34;
   cases.forEach(([t, loss]) => {
-    card(s, ML + 5.0, cy, 7.1, 0.78, CARD);
-    s.addShape(pres.ShapeType.roundRect, { x: ML + 5.0, y: cy, w: 7.1, h: 0.78,
+    s.addShape(pres.ShapeType.roundRect, { x: ML + 5.9, y: cy, w: 6.2, h: 0.8,
       rectRadius: 0.05, fill: { color: "FFFFFF" }, line: { color: LINE, width: 1 } });
-    s.addText(t, { x: ML + 5.24, y: cy + 0.08, w: 5.0, h: 0.34, fontFace: F, fontSize: 12,
+    s.addText(t, { x: ML + 6.14, y: cy + 0.08, w: 5.7, h: 0.34, fontFace: F, fontSize: 12,
       color: TXT, margin: 0, valign: "middle" });
-    s.addText("失われたもの： " + loss, { x: ML + 5.24, y: cy + 0.42, w: 5.0, h: 0.28,
+    s.addText("失われたもの： " + loss, { x: ML + 6.14, y: cy + 0.42, w: 5.7, h: 0.28,
       fontFace: F, fontSize: 10.5, color: NG, margin: 0, valign: "middle" });
-    cy += 1.0;
+    cy += 0.96;
   });
-  s.addNotes("部署名・個人名は絶対に出さない。「担当者が見逃した」ではなく「見逃せてしまう仕組みだった」と、主語を必ず仕組みに置くこと。この資料は社内に回覧される。");
+  s.addNotes("部署名・個人名は絶対に出さない。「担当者が見逃した」ではなく「見逃せてしまう仕組みだった」と、主語を必ず仕組みに置くこと。この資料は社内に回覧される。関与者が増えるという事実は、チャットとExcelでの管理が今後さらに苦しくなることの裏づけになる。");
 }
 
 // ============================================================
@@ -291,22 +308,22 @@ divider("1", "なぜ必要か", "弊社が抱える2つの課題と、その解�
 // S9 課題B 会議コスト
 // ============================================================
 {
-  const s = light("目的が曖昧な会議に、年間約7,300万円を投じています", "課題B：会議のコスト");
+  const s = light("目的が曖昧な会議に、年間約6,600万円を投じています", "課題B：会議のコスト");
   badge(s, 12.1, 0.52, 0.56, "B", B_COL, 17);
 
   card(s, ML, 1.74, 5.5, 2.34, INK);
   s.addText("年間の会議コスト（全社140名）", { x: ML + 0.42, y: 1.96, w: 4.7, h: 0.3,
     fontFace: F, fontSize: 12, color: "9FB0CC", margin: 0 });
-  s.addText("約2億790万円", { x: ML + 0.42, y: 2.3, w: 4.9, h: 0.7, fontFace: F,
-    fontSize: 34, bold: true, color: "FFFFFF", margin: 0 });
+  s.addText("約1億8,900万円", { x: ML + 0.42, y: 2.3, w: 4.9, h: 0.7, fontFace: F,
+    fontSize: 31, bold: true, color: "FFFFFF", margin: 0 });
   s.addText("うち目的が曖昧なもの（35%）", { x: ML + 0.42, y: 3.06, w: 4.7, h: 0.3,
     fontFace: F, fontSize: 12, color: "9FB0CC", margin: 0 });
-  s.addText("約7,300万円", { x: ML + 0.42, y: 3.36, w: 4.9, h: 0.56, fontFace: F,
+  s.addText("約6,600万円", { x: ML + 0.42, y: 3.36, w: 4.9, h: 0.56, fontFace: F,
     fontSize: 27, bold: true, color: ACC, margin: 0 });
 
   const rows = [
-    ["MG以上", "20名", "週22時間", "5,940万円"],
-    ["リーダー", "40名", "週17.5時間", "9,450万円"],
+    ["MG以上", "20名", "週20時間", "5,400万円"],
+    ["リーダー", "40名", "週15時間", "8,100万円"],
     ["一般社員", "80名", "週5時間", "5,400万円"],
   ];
   s.addText("階層別の内訳", { x: ML + 5.9, y: 1.78, w: 6.2, h: 0.3, fontFace: F,
@@ -329,7 +346,7 @@ divider("1", "なぜ必要か", "弊社が抱える2つの課題と、その解�
     { x: ML + 5.9, y: 4.24, w: 6.2, h: 0.66, fontFace: F, fontSize: 10.5, color: MUT,
       lineSpacing: 16, margin: 0 });
 
-  s.addText("※ リーダー層は実測値（週15〜20時間）。MG以上・一般社員は仮置きのため、実測値で更新が必要",
+  s.addText("※ リーダー層の週15時間は実測にもとづく値。MG以上・一般社員は仮置きのため、実測値で更新が必要",
     { x: ML, y: 4.32, w: 5.5, h: 0.6, fontFace: F, fontSize: 10, color: MUT,
       lineSpacing: 15, margin: 0 });
 
@@ -349,7 +366,7 @@ divider("1", "なぜ必要か", "弊社が抱える2つの課題と、その解�
 
   s.addText("いまの流れ ― 情報が5か所を経由している", { x: ML, y: 1.72, w: CW, h: 0.32,
     fontFace: F, fontSize: 13, bold: true, color: INK, margin: 0 });
-  const flow = ["Teams会議", "文字起こし", "AIで議事録生成", "Word / OneNote", "リンクをチャットで共有"];
+  const flow = ["Teams会議", "文字起こし", "AIで議事録生成", "Teams上のWord\nまたは OneNote", "リンクをチャットで共有"];
   const fw = 2.24, fgap = 0.2;
   flow.forEach((t, i) => {
     const x = ML + i * (fw + fgap);
@@ -362,13 +379,13 @@ divider("1", "なぜ必要か", "弊社が抱える2つの課題と、その解�
         fill: { color: LINE } });
     }
   });
-  s.addText("保存先が人によって違い、チャットに流れたリンクは時間が経てば遡れない",
+  s.addText("議事録は Teams上のWord と OneNote に分散。研修資料は Teams と SharePoint に分散している。",
     { x: ML, y: 3.06, w: CW, h: 0.32, fontFace: F, fontSize: 12, color: MUT, margin: 0 });
 
   const items = [
     ["B-1", "目的が事前に定義されない", "アジェンダを作る型がないため、「とりあえず集まる」定例が生き残る"],
     ["B-2", "決定が構造化されない", "決定事項・担当・期日が文章の中に埋もれ、検索も集計もできない"],
-    ["B-3", "置き場所が分散する", "Word / OneDrive / OneNote / Teams をまたぐたび情報が流れていく"],
+    ["B-3", "置き場所が分散する", "議事録はTeams上のWordとOneNoteに、研修資料はTeamsとSharePointに分かれている"],
   ];
   const cw = 3.86, gap = 0.375;
   items.forEach(([n, t, d], i) => {
@@ -621,6 +638,50 @@ divider("2", "なぜNotionなのか", "既存ツールで代替できない理�
 divider("3", "導入判断の材料", "プラン・費用・効果・リスク・進め方", ACC);
 
 // ============================================================
+// プラン別 機能比較（Enterprise含む）
+// ============================================================
+{
+  const s = light("Businessは最上位ではありません", "プラン別 機能比較");
+  const head = ["", "Plus", "Business（推奨）", "Enterprise"];
+  const rows = [
+    ["月額（1人・年払い）", "1,650円", "3,150円", "要見積（約5,425円）", "m"],
+    ["年間費用（140名）", "277.2万円", "529.2万円", "約911.4万円", "m"],
+    ["SAML SSO（Microsoft 365連携）", "✕", "○", "○", "b"],
+    ["プライベートチームスペース", "✕", "○", "○", "b"],
+    ["ページ履歴", "30日", "90日", "要確認", "b"],
+    ["SCIM（アカウント自動削除）", "✕", "✕", "○", "e"],
+    ["監査ログ", "✕", "✕", "○", "e"],
+    ["データの国内保管", "✕", "✕", "○（追加費用なし）", "e"],
+    ["ゲスト上限", "100名", "250名", "250名〜", "b"],
+  ];
+  s.addTable([
+    head.map((t, i) => ({ text: t, options: { bold: true, color: "FFFFFF",
+      fill: { color: i === 2 ? A_COL : INK } } })),
+    ...rows.map(r => {
+      const kind = r[4];
+      return r.slice(0, 4).map((t, i) => {
+        if (i === 0) return { text: t, options: { bold: true, color: TXT } };
+        const isRec = i === 2;
+        const eOnly = kind === "e" && i === 3;
+        return { text: t, options: {
+          color: eOnly ? ACC : (isRec ? A_COL : MUT),
+          bold: isRec || eOnly,
+          fill: { color: isRec ? "EDF3F8" : "FFFFFF" } } };
+      });
+    })
+  ], {
+    x: ML, y: 1.62, w: CW, colW: [4.0, 2.5, 3.0, 2.61], rowH: 0.4,
+    fontFace: F, fontSize: 11, valign: "middle", border: { pt: 1, color: LINE },
+    fill: { color: "FFFFFF" }, margin: 0.07,
+  });
+  card(s, ML, 6.02, CW, 1.0, SOFT);
+  s.addText("監査ログ・SCIM・国内データ保管はEnterpriseの機能です（差額は年間約382万円）。今回のスコープでは機微情報を置かない運用で代替し、Businessを選択します。",
+    { x: ML + 0.44, y: 6.02, w: CW - 0.88, h: 1.0, fontFace: F, fontSize: 12.5,
+      bold: true, color: INK, valign: "middle", margin: 0 });
+  s.addNotes("狙いは「一番高いプランを買おうとしているわけではない」と示すこと。上位プランの機能を自分から並べ、それを使わない理由まで説明することで、価格交渉ではなく要件で選んでいる姿勢が伝わる。情シスが監査ログや国内保管を必須とした場合は、この表がそのままEnterprise切替の根拠資料になる。");
+}
+
+// ============================================================
 // S19 プラン比較 ★
 // ============================================================
 {
@@ -715,11 +776,11 @@ divider("3", "導入判断の材料", "プラン・費用・効果・リスク�
 // S21 想定効果
 // ============================================================
 {
-  const s = light("会議時間の削減だけで、投資額の約4倍の効果を見込みます", "想定効果");
+  const s = light("会議時間の削減だけで、投資額の約3.7倍の効果を見込みます", "想定効果");
   const stats = [
     ["投資額", "529.2万円", "年間ライセンス費用", INK],
-    ["効果（会議のみ）", "約2,180万円", "目的が曖昧な会議の3割を削減", B_COL],
-    ["倍率", "約4倍", "会議削減効果 ÷ 投資額", ACC],
+    ["効果（会議のみ）", "約1,980万円", "目的が曖昧な会議の3割を削減", B_COL],
+    ["倍率", "約3.7倍", "会議削減効果 ÷ 投資額", ACC],
   ];
   const cw = 3.86, gap = 0.375;
   stats.forEach(([lab, val, sub, c], i) => {
