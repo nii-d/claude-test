@@ -300,7 +300,7 @@ divider("1", "なぜ必要か", "弊社が抱える2つの課題と、その解�
     s.addText(d, { x: x + 0.32, y: 3.74, w: cw - 0.64, h: 1.5, fontFace: F, fontSize: 12,
       color: MUT, lineSpacing: 20, margin: 0 });
   });
-  s.addText("いずれも「誰が・いつまでに・何を」が一箇所にまとまっていないことから生じています。",
+  s.addText("いずれも「誰が、いつまでに、何をするのか」が一箇所にまとまっていないことから生じています。",
     { x: ML, y: 6.14, w: CW, h: 0.38, fontFace: F, fontSize: 13.5, bold: true, color: INK, margin: 0 });
 }
 
