@@ -85,7 +85,7 @@ function card(s, x, y, w, h, fill) {
   const s = light("本日、決めていただきたいこと", "本日のお願い");
   const items = [
     ["1", "全社（140名）へのNotion導入", "案件管理と会議運営の標準化を、PMO発足と同時に開始する"],
-    ["2", "年間費用 529.2万円 のご承認", "Businessプラン・年払い（プラン比較は後半でご説明）"],
+    ["2", "年間費用 529.2万円（税別）のご承認", "Businessプラン・年払い（プラン比較は後半でご説明）"],
     ["3", "ホールディングスへの申請着手", "セキュリティ審査の事前相談を開始する許可"],
   ];
   let y = 1.72;
@@ -308,7 +308,7 @@ divider("1", "なぜ必要か", "弊社が抱える2つの課題と、その解�
 // S9 課題B 会議コスト
 // ============================================================
 {
-  const s = light("目的が曖昧な会議に、年間約6,600万円を投じています", "課題B：会議のコスト");
+  const s = light("目的が曖昧な会議に、年間約4,700万円を投じています", "課題B：会議のコスト");
   badge(s, 12.1, 0.52, 0.56, "B", B_COL, 17);
 
   card(s, ML, 1.74, 5.5, 2.34, INK);
@@ -316,9 +316,9 @@ divider("1", "なぜ必要か", "弊社が抱える2つの課題と、その解�
     fontFace: F, fontSize: 12, color: "9FB0CC", margin: 0 });
   s.addText("約1億8,900万円", { x: ML + 0.42, y: 2.3, w: 4.9, h: 0.7, fontFace: F,
     fontSize: 31, bold: true, color: "FFFFFF", margin: 0 });
-  s.addText("うち目的が曖昧なもの（35%）", { x: ML + 0.42, y: 3.06, w: 4.7, h: 0.3,
+  s.addText("うち目的が曖昧なもの（25%）", { x: ML + 0.42, y: 3.06, w: 4.7, h: 0.3,
     fontFace: F, fontSize: 12, color: "9FB0CC", margin: 0 });
-  s.addText("約6,600万円", { x: ML + 0.42, y: 3.36, w: 4.9, h: 0.56, fontFace: F,
+  s.addText("約4,700万円", { x: ML + 0.42, y: 3.36, w: 4.9, h: 0.56, fontFace: F,
     fontSize: 27, bold: true, color: ACC, margin: 0 });
 
   const rows = [
@@ -346,15 +346,15 @@ divider("1", "なぜ必要か", "弊社が抱える2つの課題と、その解�
     { x: ML + 5.9, y: 4.24, w: 6.2, h: 0.66, fontFace: F, fontSize: 10.5, color: MUT,
       lineSpacing: 16, margin: 0 });
 
-  s.addText("※ リーダー層の週15時間は実測にもとづく値。MG以上・一般社員は仮置きのため、実測値で更新が必要",
-    { x: ML, y: 4.32, w: 5.5, h: 0.6, fontFace: F, fontSize: 10, color: MUT,
+  s.addText("※ 会議時間は各階層へのヒアリングにもとづく概算です。厳密な集計は行っていないため、規模感としてご覧ください。",
+    { x: ML, y: 4.28, w: 5.5, h: 0.66, fontFace: F, fontSize: 10, color: MUT,
       lineSpacing: 15, margin: 0 });
 
   card(s, ML, 5.14, CW, 0.92, "FBF3E4");
   s.addText("削減した時間は、案件対応と提案活動に充てます。人件費の削減を目的とするものではありません。",
     { x: ML + 0.42, y: 5.14, w: CW - 0.84, h: 0.92, fontFace: F, fontSize: 13,
       bold: true, color: "7A5410", margin: 0, valign: "middle" });
-  s.addNotes("「では人を減らせるのか」と必ず聞かれる。人件費が浮くとは絶対に言わないこと。言えば人員削減の話にすり替わり、現場の協力を失う。");
+  s.addNotes("「では人を減らせるのか」と必ず聞かれる。人件費が浮くとは絶対に言わないこと。言えば人員削減の話にすり替わり、現場の協力を失う。\n\n【数字の根拠を問われたら】Outlookの予定表から抽出することは可能だが、150名分の集計に相応の工数がかかるため、今回は各階層へのヒアリングによる概算としている。精緻な数字が必要であれば別途集計する、と答える。\n\n【補足として言えること】導入後はNotion上の会議記録から、集計の手間なく実数を把握できるようになる。");
 }
 
 // ============================================================
@@ -379,13 +379,13 @@ divider("1", "なぜ必要か", "弊社が抱える2つの課題と、その解�
         fill: { color: LINE } });
     }
   });
-  s.addText("議事録は Teams上のWord と OneNote に分散。研修資料は Teams と SharePoint に分散している。",
+  s.addText("保存先が人によって違い、チャットに流れたリンクは時間が経てば遡れない。",
     { x: ML, y: 3.06, w: CW, h: 0.32, fontFace: F, fontSize: 12, color: MUT, margin: 0 });
 
   const items = [
     ["B-1", "目的が事前に定義されない", "アジェンダを作る型がないため、「とりあえず集まる」定例が生き残る"],
     ["B-2", "決定が構造化されない", "決定事項・担当・期日が文章の中に埋もれ、検索も集計もできない"],
-    ["B-3", "置き場所が分散する", "議事録はTeams上のWordとOneNoteに、研修資料はTeamsとSharePointに分かれている"],
+    ["B-3", "置き場所が分散する", "議事録がTeams上のWordとOneNoteに分かれ、どこに何があるか分からなくなる"],
   ];
   const cw = 3.86, gap = 0.375;
   items.forEach(([n, t, d], i) => {
@@ -641,11 +641,11 @@ divider("3", "導入判断の材料", "プラン・費用・効果・リスク�
 // プラン別 機能比較（Enterprise含む）
 // ============================================================
 {
-  const s = light("Businessは最上位ではありません", "プラン別 機能比較");
+  const s = light("要件を満たす最小構成は、Businessプランです", "プラン別 機能比較");
   const head = ["", "Plus", "Business（推奨）", "Enterprise"];
   const rows = [
-    ["月額（1人・年払い）", "1,650円", "3,150円", "要見積（約5,425円）", "m"],
-    ["年間費用（140名）", "277.2万円", "529.2万円", "約911.4万円", "m"],
+    ["月額（1人・年払い／税別）", "1,650円", "3,150円", "要見積（約5,425円）", "m"],
+    ["年間費用（140名／税別）", "277.2万円", "529.2万円", "約911.4万円", "m"],
     ["SAML SSO（Microsoft 365連携）", "✕", "○", "○", "b"],
     ["プライベートチームスペース", "✕", "○", "○", "b"],
     ["ページ履歴", "30日", "90日", "要確認", "b"],
@@ -688,7 +688,7 @@ divider("3", "導入判断の材料", "プラン・費用・効果・リスク�
   const s = light("3案を比較し、Businessプランの全社導入を推奨します", "プラン比較");
   const head = ["", "案1：Plus 全社", "案2：Business 全社", "案3：Business 上層部のみ\n＋一般社員はゲスト"];
   const rows = [
-    ["年間費用（140名・年払い）", "277.2万円", "529.2万円", "見かけ上は最小"],
+    ["年間費用（140名・年払い／税別）", "277.2万円", "529.2万円", "見かけ上は最小"],
     ["SAML SSO（M365連携）", "✕", "○", "○（対象者のみ）"],
     ["全社員の横断ビュー", "○", "○", "✕"],
     ["監査ログ / SCIM", "✕", "✕", "✕"],
@@ -735,28 +735,33 @@ divider("3", "導入判断の材料", "プラン・費用・効果・リスク�
 {
   const s = light("費用", "投資額");
   card(s, ML, 1.74, 6.4, 2.6, INK);
-  s.addText("年間ライセンス費用", { x: ML + 0.44, y: 1.98, w: 5.5, h: 0.3, fontFace: F,
-    fontSize: 12, color: "9FB0CC", margin: 0 });
-  s.addText("529.2万円", { x: ML + 0.44, y: 2.4, w: 5.5, h: 0.82, fontFace: F, fontSize: 40,
-    bold: true, color: "FFFFFF", margin: 0 });
-  s.addText("Business 年払い　3,150円 × 140名 × 12か月", { x: ML + 0.44, y: 3.42,
+  s.addText("年間ライセンス費用（税別）", { x: ML + 0.44, y: 1.96, w: 5.5, h: 0.3,
+    fontFace: F, fontSize: 12, color: "9FB0CC", margin: 0 });
+  s.addText("529.2万円", { x: ML + 0.44, y: 2.34, w: 5.5, h: 0.82, fontFace: F,
+    fontSize: 40, bold: true, color: "FFFFFF", margin: 0 });
+  s.addText("Business 年払い　3,150円 × 140名 × 12か月", { x: ML + 0.44, y: 3.24,
     w: 5.5, h: 0.32, fontFace: F, fontSize: 12, color: "C3CEE0", margin: 0 });
+  s.addText("消費税10%を加えた場合　582.1万円", { x: ML + 0.44, y: 3.62,
+    w: 5.5, h: 0.32, fontFace: F, fontSize: 12, bold: true, color: ACC, margin: 0 });
 
   card(s, ML + 6.75, 1.74, 5.6, 2.6, SOFT);
-  s.addText("社内工数（現金支出なし）", { x: ML + 7.09, y: 1.96, w: 4.9, h: 0.32,
+  s.addText("実施体制（現金支出なし）", { x: ML + 7.09, y: 1.96, w: 4.9, h: 0.32,
     fontFace: F, fontSize: 12.5, bold: true, color: INK, margin: 0 });
-  const eff = [["初期構築（テンプレート設計・DB構築）", "◯人月"], ["教育・定着支援（説明会・3か月伴走）", "◯人月"]];
-  let ey = 2.42;
-  eff.forEach(([t, v]) => {
-    s.addText(t, { x: ML + 7.09, y: ey, w: 3.7, h: 0.56, fontFace: F, fontSize: 11,
-      color: MUT, valign: "middle", lineSpacing: 16, margin: 0 });
-    s.addText(v, { x: ML + 10.8, y: ey, w: 1.2, h: 0.56, fontFace: F, fontSize: 13,
-      bold: true, color: INK, align: "right", valign: "middle", margin: 0 });
-    ey += 0.62;
+  const impl = [
+    "初期構築（テンプレート設計・データベース構築）",
+    "教育・定着支援（説明会・マニュアル・3か月の伴走）",
+  ];
+  let iy = 2.44;
+  impl.forEach(t => {
+    s.addShape(pres.ShapeType.ellipse, { x: ML + 7.13, y: iy + 0.11, w: 0.12, h: 0.12,
+      fill: { color: A_COL } });
+    s.addText(t, { x: ML + 7.39, y: iy, w: 4.6, h: 0.34, fontFace: F, fontSize: 11.5,
+      color: TXT, valign: "middle", margin: 0 });
+    iy += 0.44;
   });
-  s.addText("いずれも内製。PMO・人事組織の立ち上げ業務の一部として実施し、新規採用は行いません。",
-    { x: ML + 7.09, y: 3.76, w: 4.9, h: 0.5, fontFace: F, fontSize: 10.5, color: MUT,
-      lineSpacing: 15, margin: 0 });
+  s.addText("いずれも人事組織とPMOが内製で担当します。\n新規採用は行いません。",
+    { x: ML + 7.09, y: 3.42, w: 4.9, h: 0.62, fontFace: F, fontSize: 12, bold: true,
+      color: INK, lineSpacing: 19, margin: 0 });
 
   card(s, ML, 4.6, CW, 1.0, SOFT);
   s.addText("削減できる既存コスト", { x: ML + 0.44, y: 4.6, w: 3.0, h: 1.0, fontFace: F,
@@ -769,18 +774,18 @@ divider("3", "導入判断の材料", "プラン・費用・効果・リスク�
   s.addText("参考：監査ログまたは国内データ保管が必須要件となった場合は Enterprise 約911万円／年（要見積）",
     { x: ML + 0.44, y: 5.82, w: CW - 0.88, h: 1.0, fontFace: F, fontSize: 12.5, bold: true,
       color: "7A5410", valign: "middle", margin: 0 });
-  s.addNotes("工数は金額換算して合計に足さない。内製なら現金支出は増えず、足せば投資額が膨らんで求められる効果も大きくなる。一方、書かないと「タダでできる」と誤解されるため人月では必ず明示する。");
+  s.addNotes("工数を人月で示さず内製である旨の記述に留めたのは、見積もれていない数字を空欄で出すと準備不足に見えるため。「タダでできる」と誤解されないことだけを担保している。\n\n税区分は公式ページに明記がないため税別として扱っている。契約時に必ず確認すること。承認額が約53万円変わる。");
 }
 
 // ============================================================
 // S21 想定効果
 // ============================================================
 {
-  const s = light("会議時間の削減だけで、投資額の約3.7倍の効果を見込みます", "想定効果");
+  const s = light("会議時間の削減だけで、投資額の約2.7倍の効果を見込みます", "想定効果");
   const stats = [
-    ["投資額", "529.2万円", "年間ライセンス費用", INK],
-    ["効果（会議のみ）", "約1,980万円", "目的が曖昧な会議の3割を削減", B_COL],
-    ["倍率", "約3.7倍", "会議削減効果 ÷ 投資額", ACC],
+    ["投資額", "529.2万円", "年間ライセンス費用（税別）", INK],
+    ["効果（会議のみ）", "約1,420万円", "目的が曖昧な会議の3割を削減", B_COL],
+    ["倍率", "約2.7倍", "会議削減効果 ÷ 投資額", ACC],
   ];
   const cw = 3.86, gap = 0.375;
   stats.forEach(([lab, val, sub, c], i) => {
@@ -903,53 +908,49 @@ divider("3", "導入判断の材料", "プラン・費用・効果・リスク�
 // S24 今後の展望 ★
 // ============================================================
 {
-  const s = light("今後の展望 ― ただし、今回は範囲を絞ります", "中長期の構想");
-  s.addText("今回のスコープ", { x: ML, y: 1.76, w: 5.4, h: 0.3, fontFace: F, fontSize: 11.5,
-    bold: true, color: ACC, margin: 0 });
-  const now = [["①", "案件管理", A_COL], ["②", "議事録・会議", B_COL]];
-  let ny = 2.12;
-  now.forEach(([n, t, c]) => {
-    s.addShape(pres.ShapeType.roundRect, { x: ML, y: ny, w: 4.5, h: 0.86, rectRadius: 0.06,
+  const s = light("今回のスコープ ― やること／やらないこと", "対象範囲");
+
+  s.addText("今回ご承認いただきたい範囲", { x: ML, y: 1.76, w: 5.4, h: 0.3, fontFace: F,
+    fontSize: 11.5, bold: true, color: ACC, margin: 0 });
+  [["①", "案件管理", A_COL], ["②", "議事録・会議運営", B_COL]].forEach(([n, t, c], i) => {
+    const y = 2.12 + i * 0.98;
+    s.addShape(pres.ShapeType.roundRect, { x: ML, y, w: 4.9, h: 0.86, rectRadius: 0.06,
       fill: { color: c }, shadow: sh() });
-    s.addText(n + "　" + t, { x: ML + 0.34, y: ny, w: 4.0, h: 0.86, fontFace: F,
+    s.addText(n + "　" + t, { x: ML + 0.34, y, w: 4.4, h: 0.86, fontFace: F,
       fontSize: 17, bold: true, color: "FFFFFF", valign: "middle", margin: 0 });
-    ny += 0.98;
   });
-  s.addText("まずここだけ", { x: ML, y: 4.1, w: 4.5, h: 0.3, fontFace: F, fontSize: 11,
-    bold: true, color: MUT, align: "center", margin: 0 });
+  s.addText("やること", { x: ML, y: 4.1, w: 4.9, h: 0.3, fontFace: F, fontSize: 11,
+    bold: true, color: INK, align: "center", margin: 0 });
 
-  s.addShape(pres.ShapeType.rightArrow, { x: ML + 4.78, y: 2.78, w: 0.5, h: 0.34,
-    fill: { color: LINE } });
-
-  s.addText("将来の構想", { x: ML + 5.6, y: 1.76, w: 5.4, h: 0.3, fontFace: F, fontSize: 11.5,
-    bold: true, color: MUT, margin: 0 });
+  s.addText("今回は対象に含めないもの", { x: ML + 5.6, y: 1.76, w: 6.75, h: 0.3, fontFace: F,
+    fontSize: 11.5, bold: true, color: MUT, margin: 0 });
   s.addShape(pres.ShapeType.roundRect, { x: ML + 5.6, y: 2.12, w: 6.75, h: 1.84,
     rectRadius: 0.06, fill: { color: "FFFFFF" }, line: { color: LINE, width: 1.5, dashType: "dash" } });
-  s.addText("③　社内ナレッジの移行", { x: ML + 5.94, y: 2.36, w: 6.1, h: 0.42, fontFace: F,
+  s.addText("③　研修資料・ナレッジの保管", { x: ML + 5.94, y: 2.36, w: 6.1, h: 0.42, fontFace: F,
     fontSize: 17, bold: true, color: MUT, margin: 0 });
-  s.addText("現在SharePointに集約しているナレッジをNotionに統合し、\n案件・議事録・ナレッジが1か所で繋がる状態を目指したい。",
+  s.addText("SharePointでの管理方法（ドキュメントセット化・タグ運用）を\n別途検討中です。本提案とは切り離して進めます。",
     { x: ML + 5.94, y: 2.86, w: 6.1, h: 0.84, fontFace: F, fontSize: 12, color: MUT,
       lineSpacing: 20, margin: 0 });
-  s.addText("今回は実施しません", { x: ML + 5.6, y: 4.1, w: 6.75, h: 0.3, fontFace: F,
+  s.addText("やらないこと", { x: ML + 5.6, y: 4.1, w: 6.75, h: 0.3, fontFace: F,
     fontSize: 11, bold: true, color: MUT, align: "center", margin: 0 });
 
-  s.addText("なぜ絞るのか", { x: ML, y: 4.62, w: CW, h: 0.3, fontFace: F, fontSize: 12.5,
+  s.addText("なぜ範囲を絞るのか", { x: ML, y: 4.62, w: CW, h: 0.3, fontFace: F, fontSize: 12.5,
     bold: true, color: INK, margin: 0 });
   const why = [
     ["撤退可能性の確保", "思うような成果が得られなかった場合に、やめられる状態を保つ"],
-    ["移行コストの回避", "SharePointの既存資産を移行すると、後戻りが困難になる"],
+    ["進行中の検討と干渉しない", "資料保管のルールは別軸で検討中。今回の判断がそちらを縛らないようにする"],
     ["効果検証の明確化", "範囲が狭いほど、効果が出たかどうかを判定しやすい"],
   ];
   const cw = 3.86, gap = 0.375;
   why.forEach(([t, d], i) => {
     const x = ML + i * (cw + gap);
     card(s, x, 4.98, cw, 1.38, SOFT);
-    s.addText(t, { x: x + 0.28, y: 5.14, w: cw - 0.56, h: 0.34, fontFace: F, fontSize: 13,
+    s.addText(t, { x: x + 0.28, y: 5.12, w: cw - 0.56, h: 0.36, fontFace: F, fontSize: 13,
       bold: true, color: INK, margin: 0 });
-    s.addText(d, { x: x + 0.28, y: 5.5, w: cw - 0.56, h: 0.7, fontFace: F, fontSize: 11,
+    s.addText(d, { x: x + 0.28, y: 5.5, w: cw - 0.56, h: 0.74, fontFace: F, fontSize: 11,
       color: MUT, lineSpacing: 17, margin: 0 });
   });
-  s.addNotes("このスライドは守りではなく攻め。展望を語ることで『構想がある』と伝わり、同時に『今回はここまで』と自ら線を引くことで、なし崩しに全社システムを乗り換えるのではという警戒を解除できる。上層部が最も嫌う『気づいたら引き返せない』を先回りして潰す1枚。");
+  s.addNotes("「展望」ではなく「やらないこと」を明示するスライド。上層部が最も嫌うのは『気づいたら引き返せなくなっていた』状態なので、それを先回りして潰す。\n\n資料保管のルールはSharePointのドキュメントセット化・タグ運用として別途検討が進行中であり、Notionへ移すかどうかは決まっていない。この提案がそちらの選択肢を狭めないことを明示するため、ここではNotionという語を使わない。\n\n「では資料はどうするのか」と聞かれたら、別プロジェクトとして検討中であり本提案とは切り離している、と答える。");
 }
 
 // ============================================================
@@ -1004,7 +1005,7 @@ divider("3", "導入判断の材料", "プラン・費用・効果・リスク�
     fontSize: 28, bold: true, color: "FFFFFF", margin: 0, valign: "middle" });
   const items = [
     ["1", "全社（140名）へのNotion導入のご承認"],
-    ["2", "年間費用 529.2万円 のご承認（Business・年払い）"],
+    ["2", "年間費用 529.2万円（税別）のご承認（Business・年払い）"],
     ["3", "ホールディングスへの導入申請着手のご許可"],
   ];
   let y = 1.72;
