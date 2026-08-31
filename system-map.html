@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>システム連携マップ</title>
+<style>
+  :root {
+    --bg: #eef3ee;
+    --paper: #ffffff;
+    --ink: #243040;
+    --muted: #6b7c8c;
+    --grid: #dfe8de;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header {
+    padding: 20px 28px 12px;
+    background: linear-gradient(180deg, #ffffff, #f3f7f1);
+    border-bottom: 1px solid #d7e0d4;
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    letter-spacing: .02em;
+  }
+  header p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 28px;
+    background: #fff;
+    border-bottom: 1px solid #e3e9e0;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .toolbar button {
+    border: 1px solid #c7d2c4;
+    background: #fbfdfa;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .toolbar button:hover { background: #eef4ea; }
+  .toolbar .hint { font-size: 12px; color: var(--muted); margin-left: 8px; }
+  .map-scroll {
+    overflow: auto;
+    background: var(--bg);
+    padding: 18px;
+  }
+  .map-scale {
+    transform-origin: 0 0;
+    display: inline-block;
+    transition: transform .15s ease-out;
+  }
+  svg#map {
+    display: block;
+    background: var(--bg);
+  }
+  .mapgrid line { stroke: var(--grid); stroke-width: 1; }
+  .pref-title { font-size: 20px; font-weight: 700; fill: #3a5d2b; opacity: .55; letter-spacing: .08em; }
+  .ward-title { font-size: 13px; font-weight: 700; }
+  .bldg-label { font-size: 11.5px; text-anchor: middle; dominant-baseline: middle; font-weight: 600; }
+  .bldg rect { transition: filter .15s ease; }
+  .bldg { cursor: pointer; }
+  .road-casing { fill: none; stroke: #eef3ee; stroke-width: 8; stroke-linejoin: round; stroke-linecap: round; }
+  .road-line { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+  .road-one.road-line { stroke: #5b6b7d; stroke-width: 2.6; }
+  .road-bi.road-line { stroke: #b5651d; stroke-width: 3.4; }
+  .road-plain.road-line { stroke: #8a5bc9; stroke-width: 2.4; }
+  .road-plain.road-casing { stroke-width: 6; }
+  svg#map.hovering .bldg,
+  svg#map.hovering .edge { opacity: .18; }
+  svg#map.hovering .bldg.hl,
+  svg#map.hovering .edge.hl { opacity: 1; }
+  svg#map.hovering .edge.hl .road-line { stroke-width: 4.6; }
+  svg#map.hovering .bldg.hl rect:first-of-type { stroke-width: 3.4; }
+  .legend {
+    padding: 16px 28px 26px;
+    background: #fff;
+    border-top: 1px solid #e3e9e0;
+  }
+  .legend h2 { font-size: 14px; margin: 0 0 10px; color: var(--ink); }
+  .legend-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    font-size: 12.5px;
+    margin-bottom: 14px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .swatch { width: 14px; height: 14px; border-radius: 4px; border: 2px solid; display: inline-block; }
+  .legend-roads { display: flex; flex-wrap: wrap; gap: 18px; font-size: 12.5px; color: var(--muted); }
+  .legend-roads .ritem { display: flex; align-items: center; gap: 8px; }
+  .rline { width: 34px; height: 0; border-top-width: 3px; border-top-style: solid; display: inline-block; }
+  .note { margin-top: 12px; font-size: 11.5px; color: var(--muted); line-height: 1.6; }
+  footer { padding: 10px 28px 22px; font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>組織内システム連携マップ</h1>
+  <p>アップロードされた Mermaid フローチャート（flowchart_TB_0831.txt）を、区画地図（タウンマップ）風に再構成したものです。大きな区画＝上位グループ（PCA / TPL）、色付きの街区＝業務カテゴリ、建物＝個別システム、道路＝システム間の連携を表します。</p>
+</header>
+<div class="toolbar">
+  <button id="zoomIn">＋ 拡大</button>
+  <button id="zoomOut">－ 縮小</button>
+  <button id="zoomReset">リセット</button>
+  <span class="hint">建物にカーソルを合わせる（またはフォーカス）と、関連する道路と接続先が強調表示されます。スクロールで地図を移動できます。</span>
+</div>
+<div class="map-scroll">
+  <div class="map-scale" id="mapScale">
+<svg id="map" viewBox="0 0 2560 980" width="2560" height="980" xmlns="http://www.w3.org/2000/svg">
+
+<defs>
+  <marker id="arrowGray" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#5b6b7d"/>
+  </marker>
+  <marker id="arrowAmber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#b5651d"/>
+  </marker>
+  <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+    <feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#2c3a4a" flood-opacity="0.18"/>
+  </filter>
+</defs>
+
+<g class="mapgrid"><line x1="0" y1="0" x2="0" y2="980" /><line x1="60" y1="0" x2="60" y2="980" /><line x1="120" y1="0" x2="120" y2="980" /><line x1="180" y1="0" x2="180" y2="980" /><line x1="240" y1="0" x2="240" y2="980" /><line x1="300" y1="0" x2="300" y2="980" /><line x1="360" y1="0" x2="360" y2="980" /><line x1="420" y1="0" x2="420" y2="980" /><line x1="480" y1="0" x2="480" y2="980" /><line x1="540" y1="0" x2="540" y2="980" /><line x1="600" y1="0" x2="600" y2="980" /><line x1="660" y1="0" x2="660" y2="980" /><line x1="720" y1="0" x2="720" y2="980" /><line x1="780" y1="0" x2="780" y2="980" /><line x1="840" y1="0" x2="840" y2="980" /><line x1="900" y1="0" x2="900" y2="980" /><line x1="960" y1="0" x2="960" y2="980" /><line x1="1020" y1="0" x2="1020" y2="980" /><line x1="1080" y1="0" x2="1080" y2="980" /><line x1="1140" y1="0" x2="1140" y2="980" /><line x1="1200" y1="0" x2="1200" y2="980" /><line x1="1260" y1="0" x2="1260" y2="980" /><line x1="1320" y1="0" x2="1320" y2="980" /><line x1="1380" y1="0" x2="1380" y2="980" /><line x1="1440" y1="0" x2="1440" y2="980" /><line x1="1500" y1="0" x2="1500" y2="980" /><line x1="1560" y1="0" x2="1560" y2="980" /><line x1="1620" y1="0" x2="1620" y2="980" /><line x1="1680" y1="0" x2="1680" y2="980" /><line x1="1740" y1="0" x2="1740" y2="980" /><line x1="1800" y1="0" x2="1800" y2="980" /><line x1="1860" y1="0" x2="1860" y2="980" /><line x1="1920" y1="0" x2="1920" y2="980" /><line x1="1980" y1="0" x2="1980" y2="980" /><line x1="2040" y1="0" x2="2040" y2="980" /><line x1="2100" y1="0" x2="2100" y2="980" /><line x1="2160" y1="0" x2="2160" y2="980" /><line x1="2220" y1="0" x2="2220" y2="980" /><line x1="2280" y1="0" x2="2280" y2="980" /><line x1="2340" y1="0" x2="2340" y2="980" /><line x1="2400" y1="0" x2="2400" y2="980" /><line x1="2460" y1="0" x2="2460" y2="980" /><line x1="2520" y1="0" x2="2520" y2="980" /><line x1="0" y1="0" x2="2560" y2="0" /><line x1="0" y1="60" x2="2560" y2="60" /><line x1="0" y1="120" x2="2560" y2="120" /><line x1="0" y1="180" x2="2560" y2="180" /><line x1="0" y1="240" x2="2560" y2="240" /><line x1="0" y1="300" x2="2560" y2="300" /><line x1="0" y1="360" x2="2560" y2="360" /><line x1="0" y1="420" x2="2560" y2="420" /><line x1="0" y1="480" x2="2560" y2="480" /><line x1="0" y1="540" x2="2560" y2="540" /><line x1="0" y1="600" x2="2560" y2="600" /><line x1="0" y1="660" x2="2560" y2="660" /><line x1="0" y1="720" x2="2560" y2="720" /><line x1="0" y1="780" x2="2560" y2="780" /><line x1="0" y1="840" x2="2560" y2="840" /><line x1="0" y1="900" x2="2560" y2="900" /><line x1="0" y1="960" x2="2560" y2="960" /></g>
+<g class="district ward" data-id="sub_L6" data-cat="mail">
+<rect x="170" y="150" width="302" height="94" rx="16" ry="16" fill="#f1e3ff" fill-opacity="0.55" stroke="#8a5bc9" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L8" data-cat="telecom">
+<rect x="170" y="284" width="302" height="94" rx="16" ry="16" fill="#dbf6fb" fill-opacity="0.55" stroke="#3aa7bd" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L11" data-cat="data">
+<rect x="170" y="418" width="302" height="94" rx="16" ry="16" fill="#e7e6fb" fill-opacity="0.55" stroke="#6f6fc9" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L2" data-cat="contract">
+<rect x="512" y="150" width="160" height="94" rx="16" ry="16" fill="#e3ecff" fill-opacity="0.55" stroke="#5b7fd1" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L4" data-cat="customer">
+<rect x="512" y="284" width="160" height="94" rx="16" ry="16" fill="#ffe3ea" fill-opacity="0.55" stroke="#d16b82" stroke-width="2"/>
+</g>
+<g class="district pref" data-id="sub_L1"><rect x="762" y="150" width="1020" height="342" rx="26" ry="26" fill="#ecffde" stroke="#7fae55" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/></g>
+<g class="district ward" data-id="sub_L1_M1" data-cat="customer">
+<rect x="778" y="196" width="476" height="218" rx="16" ry="16" fill="#ffe3ea" fill-opacity="0.55" stroke="#d16b82" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L1_M1_S1" data-cat="customer">
+<rect x="794" y="242" width="444" height="156" rx="16" ry="16" fill="#f9fcff" fill-opacity="0.55" stroke="#6c9ebf" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L1_M2" data-cat="training">
+<rect x="1274" y="196" width="476" height="280" rx="16" ry="16" fill="#dff5ee" fill-opacity="0.55" stroke="#45a685" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L1_M2_S1" data-cat="training">
+<rect x="1290" y="304" width="444" height="156" rx="16" ry="16" fill="#f9fcff" fill-opacity="0.55" stroke="#6c9ebf" stroke-width="2"/>
+</g>
+<g class="district pref" data-id="sub_L7"><rect x="1872" y="150" width="530" height="270" rx="26" ry="26" fill="#fff2de" stroke="#c99a4d" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/></g>
+<g class="district ward" data-id="sub_L7_M1" data-cat="staff">
+<rect x="1888" y="196" width="302" height="94" rx="16" ry="16" fill="#e8ecf3" fill-opacity="0.55" stroke="#6b7c93" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L7_M2" data-cat="expense">
+<rect x="2210" y="196" width="160" height="94" rx="16" ry="16" fill="#ffead2" fill-opacity="0.55" stroke="#d98a3d" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L7_M3" data-cat="contract">
+<rect x="1888" y="310" width="160" height="94" rx="16" ry="16" fill="#e3ecff" fill-opacity="0.55" stroke="#5b7fd1" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L7_M4" data-cat="info">
+<rect x="2210" y="310" width="160" height="94" rx="16" ry="16" fill="#eef7d6" fill-opacity="0.55" stroke="#8ab13d" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L10" data-cat="staff">
+<rect x="170" y="582" width="302" height="94" rx="16" ry="16" fill="#e8ecf3" fill-opacity="0.55" stroke="#6b7c93" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L5" data-cat="marketing">
+<rect x="532" y="582" width="302" height="94" rx="16" ry="16" fill="#fff6cf" fill-opacity="0.55" stroke="#c9a227" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L3" data-cat="expense">
+<rect x="894" y="582" width="444" height="94" rx="16" ry="16" fill="#ffead2" fill-opacity="0.55" stroke="#d98a3d" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L12" data-cat="trainsys">
+<rect x="1398" y="582" width="444" height="156" rx="16" ry="16" fill="#f5e9d6" fill-opacity="0.55" stroke="#a97b4a" stroke-width="2"/>
+</g>
+<g class="district ward" data-id="sub_L9" data-cat="training">
+<rect x="1902" y="582" width="444" height="94" rx="16" ry="16" fill="#dff5ee" fill-opacity="0.55" stroke="#45a685" stroke-width="2"/>
+</g>
+<g class="edge" data-source="WinHP" data-target="LABO"><path class="road road-one road-casing" d="M 874.0,336.0 L 874.0,350.0"/><path class="road road-one road-line" d="M 874.0,336.0 L 874.0,350.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="WinHP" data-target="Wii"><path class="road road-one road-casing" d="M 874.0,336.0 L 874.0,343.0 L 1158.0,343.0 L 1158.0,336.0"/><path class="road road-one road-line" d="M 874.0,336.0 L 874.0,343.0 L 1158.0,343.0 L 1158.0,336.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="WinHP" data-target="DS"><path class="road road-one road-casing" d="M 938.0,312.0 L 952.0,312.0"/><path class="road road-one road-line" d="M 938.0,312.0 L 952.0,312.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="WinHP" data-target="Marketo"><path class="road road-one road-casing" d="M 874.0,336.0 L 874.0,482.0 L 612.0,482.0 L 612.0,628.0"/><path class="road road-one road-line" d="M 874.0,336.0 L 874.0,482.0 L 612.0,482.0 L 612.0,628.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="WinHP" data-target="DirectCloudBOX"><path class="road road-one road-casing" d="M 810.0,312.0 L 562.0,312.0 L 562.0,488.0 L 314.0,488.0"/><path class="road road-one road-line" d="M 810.0,312.0 L 562.0,312.0 L 562.0,488.0 L 314.0,488.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="Wii" data-target="Marketo"><path class="road road-one road-casing" d="M 1094.0,312.0 L 885.0,312.0 L 885.0,652.0 L 676.0,652.0"/><path class="road road-one road-line" d="M 1094.0,312.0 L 885.0,312.0 L 885.0,652.0 L 676.0,652.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="Wii" data-target="LMS"><path class="road road-one road-casing" d="M 1222.0,312.0 L 1256.0,312.0 L 1256.0,266.0 L 1290.0,266.0"/><path class="road road-one road-line" d="M 1222.0,312.0 L 1256.0,312.0 L 1256.0,266.0 L 1290.0,266.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="Wii" data-target="GMO"><path class="road road-bi road-casing" d="M 1158.0,336.0 L 1158.0,482.0 L 974.0,482.0 L 974.0,628.0"/><path class="road road-bi road-line" d="M 1158.0,336.0 L 1158.0,482.0 L 974.0,482.0 L 974.0,628.0" marker-start="url(#arrowAmber)" marker-end="url(#arrowAmber)" /></g>
+<g class="edge" data-source="Wii" data-target="RobotPayment"><path class="road road-bi road-casing" d="M 1158.0,336.0 L 1158.0,482.0 L 1116.0,482.0 L 1116.0,628.0"/><path class="road road-bi road-line" d="M 1158.0,336.0 L 1158.0,482.0 L 1116.0,482.0 L 1116.0,628.0" marker-start="url(#arrowAmber)" marker-end="url(#arrowAmber)" /></g>
+<g class="edge" data-source="Wii" data-target="Qualtrics"><path class="road road-bi road-casing" d="M 1094.0,312.0 L 956.0,312.0 L 956.0,652.0 L 818.0,652.0"/><path class="road road-bi road-line" d="M 1094.0,312.0 L 956.0,312.0 L 956.0,652.0 L 818.0,652.0" marker-start="url(#arrowAmber)" marker-end="url(#arrowAmber)" /></g>
+<g class="edge" data-source="LABO" data-target="Wii"><path class="road road-one road-casing" d="M 938.0,374.0 L 1016.0,374.0 L 1016.0,312.0 L 1094.0,312.0"/><path class="road road-one road-line" d="M 938.0,374.0 L 1016.0,374.0 L 1016.0,312.0 L 1094.0,312.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="BizMail" data-target="WinHP"><path class="road road-one road-casing" d="M 456.0,220.0 L 633.0,220.0 L 633.0,312.0 L 810.0,312.0"/><path class="road road-one road-line" d="M 456.0,220.0 L 633.0,220.0 L 633.0,312.0 L 810.0,312.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="BizMail" data-target="DS"><path class="road road-one road-casing" d="M 456.0,220.0 L 704.0,220.0 L 704.0,312.0 L 952.0,312.0"/><path class="road road-one road-line" d="M 456.0,220.0 L 704.0,220.0 L 704.0,312.0 L 952.0,312.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="CONNPATH" data-target="LABO"><path class="road road-one road-casing" d="M 1370.0,398.0 L 1370.0,405.0 L 874.0,405.0 L 874.0,398.0"/><path class="road road-one road-line" d="M 1370.0,398.0 L 1370.0,405.0 L 874.0,405.0 L 874.0,398.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="CONNPATH" data-target="SCT"><path class="road road-one road-casing" d="M 1370.0,398.0 L 1370.0,405.0 L 1654.0,405.0 L 1654.0,398.0"/><path class="road road-one road-line" d="M 1370.0,398.0 L 1370.0,405.0 L 1654.0,405.0 L 1654.0,398.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="CourseMappingSys" data-target="CourseDB"><path class="road road-one road-casing" d="M 1448.0,374.0 L 1441.0,374.0 L 1441.0,436.0 L 1434.0,436.0"/><path class="road road-one road-line" d="M 1448.0,374.0 L 1441.0,374.0 L 1441.0,436.0 L 1434.0,436.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="CWS" data-target="COMPANY"><path class="road road-one road-casing" d="M 2032.0,266.0 L 2046.0,266.0"/><path class="road road-one road-line" d="M 2032.0,266.0 L 2046.0,266.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="Concur" data-target="SuperStreamNX"><path class="road road-one road-casing" d="M 2226.0,266.0 L 1774.0,266.0 L 1774.0,652.0 L 1322.0,652.0"/><path class="road road-one road-line" d="M 2226.0,266.0 L 1774.0,266.0 L 1774.0,652.0 L 1322.0,652.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="DS" data-target="Genesys"><path class="road road-bi road-casing" d="M 952.0,312.0 L 633.0,312.0 L 633.0,354.0 L 314.0,354.0"/><path class="road road-bi road-line" d="M 952.0,312.0 L 633.0,312.0 L 633.0,354.0 L 314.0,354.0" marker-start="url(#arrowAmber)" marker-end="url(#arrowAmber)" /></g>
+<g class="edge" data-source="DS" data-target="Marketo"><path class="road road-one road-casing" d="M 952.0,312.0 L 814.0,312.0 L 814.0,652.0 L 676.0,652.0"/><path class="road road-one road-line" d="M 952.0,312.0 L 814.0,312.0 L 814.0,652.0 L 676.0,652.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="DS" data-target="CloudSign"><path class="road road-one road-casing" d="M 952.0,312.0 L 804.0,312.0 L 804.0,220.0 L 656.0,220.0"/><path class="road road-one road-line" d="M 952.0,312.0 L 804.0,312.0 L 804.0,220.0 L 656.0,220.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="DS" data-target="Wii"><path class="road road-bi road-casing" d="M 1080.0,312.0 L 1094.0,312.0"/><path class="road road-bi road-line" d="M 1080.0,312.0 L 1094.0,312.0" marker-start="url(#arrowAmber)" marker-end="url(#arrowAmber)" /></g>
+<g class="edge" data-source="MailWise" data-target="DS"><path class="road road-one road-casing" d="M 314.0,220.0 L 633.0,220.0 L 633.0,312.0 L 952.0,312.0"/><path class="road road-one road-line" d="M 314.0,220.0 L 633.0,220.0 L 633.0,312.0 L 952.0,312.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="MailWise" data-target="Wii"><path class="road road-one road-casing" d="M 314.0,220.0 L 704.0,220.0 L 704.0,312.0 L 1094.0,312.0"/><path class="road road-one road-line" d="M 314.0,220.0 L 704.0,220.0 L 704.0,312.0 L 1094.0,312.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="TimeRex" data-target="LABO"><path class="road road-one road-casing" d="M 592.0,378.0 L 592.0,385.0 L 874.0,385.0 L 874.0,378.0"/><path class="road road-one road-line" d="M 592.0,378.0 L 592.0,385.0 L 874.0,385.0 L 874.0,378.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="Genesys" data-target="JiyuHodai"><path class="road road-one road-casing" d="M 314.0,354.0 L 328.0,354.0"/><path class="road road-one road-line" d="M 314.0,354.0 L 328.0,354.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="CWS" data-target="CAREERSHIP"><path class="road road-one road-casing" d="M 1968.0,290.0 L 1968.0,297.0 L 1496.0,297.0 L 1496.0,290.0"/><path class="road road-one road-line" d="M 1968.0,290.0 L 1968.0,297.0 L 1496.0,297.0 L 1496.0,290.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="CAREERSHIP" data-target="Qualtrics"><path class="road road-one road-casing" d="M 1432.0,266.0 L 1125.0,266.0 L 1125.0,652.0 L 818.0,652.0"/><path class="road road-one road-line" d="M 1432.0,266.0 L 1125.0,266.0 L 1125.0,652.0 L 818.0,652.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="CAREERSHIP" data-target="Jukorireki"><path class="road road-one road-casing" d="M 1496.0,290.0 L 1496.0,351.0 L 1512.0,351.0 L 1512.0,412.0"/><path class="road road-one road-line" d="M 1496.0,290.0 L 1496.0,351.0 L 1512.0,351.0 L 1512.0,412.0" marker-end="url(#arrowGray)" /></g>
+<g class="edge" data-source="CAREERSHIP" data-target="sub_L12"><path class="road road-plain road-casing" d="M 1496.0,290.0 L 1496.0,436.0 L 1620.0,436.0 L 1620.0,582.0"/><path class="road road-plain road-line" d="M 1496.0,290.0 L 1496.0,436.0 L 1620.0,436.0 L 1620.0,582.0"  stroke-dasharray="10 8"/></g>
+<g class="bldg" data-id="MailWise" data-cat="mail" tabindex="0"><rect x="186" y="196" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#8a5bc9" stroke-width="2" filter="url(#softShadow)"/><rect x="186" y="196" width="6" height="48" rx="3" ry="3" fill="#8a5bc9"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="250.0" y="224.0">メールワイズ</tspan></text></g>
+<g class="bldg" data-id="BizMail" data-cat="mail" tabindex="0"><rect x="328" y="196" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#8a5bc9" stroke-width="2" filter="url(#softShadow)"/><rect x="328" y="196" width="6" height="48" rx="3" ry="3" fill="#8a5bc9"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="392.0" y="224.0">Bizメール</tspan></text></g>
+<g class="bldg" data-id="Genesys" data-cat="telecom" tabindex="0"><rect x="186" y="330" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#3aa7bd" stroke-width="2" filter="url(#softShadow)"/><rect x="186" y="330" width="6" height="48" rx="3" ry="3" fill="#3aa7bd"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="250.0" y="358.0">Genesys</tspan></text></g>
+<g class="bldg" data-id="JiyuHodai" data-cat="telecom" tabindex="0"><rect x="328" y="330" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#3aa7bd" stroke-width="2" filter="url(#softShadow)"/><rect x="328" y="330" width="6" height="48" rx="3" ry="3" fill="#3aa7bd"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="392.0" y="358.0">自由放題</tspan></text></g>
+<g class="bldg" data-id="DirectCloudBOX" data-cat="data" tabindex="0"><rect x="186" y="464" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#6f6fc9" stroke-width="2" filter="url(#softShadow)"/><rect x="186" y="464" width="6" height="48" rx="3" ry="3" fill="#6f6fc9"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="250.0" y="485.2">ダイレクトク</tspan><tspan x="250.0" y="498.8">ラウドBOX</tspan></text></g>
+<g class="bldg" data-id="URL" data-cat="data" tabindex="0"><rect x="328" y="464" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#6f6fc9" stroke-width="2" filter="url(#softShadow)"/><rect x="328" y="464" width="6" height="48" rx="3" ry="3" fill="#6f6fc9"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="392.0" y="478.5">期限付き動</tspan><tspan x="392.0" y="492.0">画URL発</tspan><tspan x="392.0" y="505.5">行システム</tspan></text></g>
+<g class="bldg" data-id="CloudSign" data-cat="contract" tabindex="0"><rect x="528" y="196" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#5b7fd1" stroke-width="2" filter="url(#softShadow)"/><rect x="528" y="196" width="6" height="48" rx="3" ry="3" fill="#5b7fd1"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="592.0" y="217.2">クラウド</tspan><tspan x="592.0" y="230.8">サイン</tspan></text></g>
+<g class="bldg" data-id="TimeRex" data-cat="customer" tabindex="0"><rect x="528" y="330" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#d16b82" stroke-width="2" filter="url(#softShadow)"/><rect x="528" y="330" width="6" height="48" rx="3" ry="3" fill="#d16b82"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="592.0" y="358.0">TimeRex</tspan></text></g>
+<g class="bldg" data-id="WinHP" data-cat="customer" tabindex="0"><rect x="810" y="288" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#d16b82" stroke-width="2" filter="url(#softShadow)"/><rect x="810" y="288" width="6" height="48" rx="3" ry="3" fill="#d16b82"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="874.0" y="309.2">Winスク</tspan><tspan x="874.0" y="322.8">ールHP</tspan></text></g>
+<g class="bldg" data-id="DS" data-cat="customer" tabindex="0"><rect x="952" y="288" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#d16b82" stroke-width="2" filter="url(#softShadow)"/><rect x="952" y="288" width="6" height="48" rx="3" ry="3" fill="#d16b82"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1016.0" y="316.0">DS</tspan></text></g>
+<g class="bldg" data-id="Wii" data-cat="customer" tabindex="0"><rect x="1094" y="288" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#d16b82" stroke-width="2" filter="url(#softShadow)"/><rect x="1094" y="288" width="6" height="48" rx="3" ry="3" fill="#d16b82"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1158.0" y="316.0">Wii</tspan></text></g>
+<g class="bldg" data-id="LABO" data-cat="customer" tabindex="0"><rect x="810" y="350" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#d16b82" stroke-width="2" filter="url(#softShadow)"/><rect x="810" y="350" width="6" height="48" rx="3" ry="3" fill="#d16b82"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="874.0" y="378.0">LABO</tspan></text></g>
+<g class="bldg" data-id="RealtimeTicket" data-cat="customer" tabindex="0"><rect x="952" y="350" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#d16b82" stroke-width="2" filter="url(#softShadow)"/><rect x="952" y="350" width="6" height="48" rx="3" ry="3" fill="#d16b82"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1016.0" y="371.2">リアルタイム</tspan><tspan x="1016.0" y="384.8">チケット分析</tspan></text></g>
+<g class="bldg" data-id="LMS" data-cat="training" tabindex="0"><rect x="1290" y="242" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#45a685" stroke-width="2" filter="url(#softShadow)"/><rect x="1290" y="242" width="6" height="48" rx="3" ry="3" fill="#45a685"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1354.0" y="270.0">LMS</tspan></text></g>
+<g class="bldg" data-id="CAREERSHIP" data-cat="training" tabindex="0"><rect x="1432" y="242" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#45a685" stroke-width="2" filter="url(#softShadow)"/><rect x="1432" y="242" width="6" height="48" rx="3" ry="3" fill="#45a685"/><text class="bldg-label" fill="#243040" font-size="10.5"><tspan x="1496.0" y="270.0">CAREERSHIP</tspan></text></g>
+<g class="bldg" data-id="CONNPATH" data-cat="training" tabindex="0"><rect x="1306" y="350" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#45a685" stroke-width="2" filter="url(#softShadow)"/><rect x="1306" y="350" width="6" height="48" rx="3" ry="3" fill="#45a685"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1370.0" y="378.0">CONN-PATH</tspan></text></g>
+<g class="bldg" data-id="CourseMappingSys" data-cat="training" tabindex="0"><rect x="1448" y="350" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#45a685" stroke-width="2" filter="url(#softShadow)"/><rect x="1448" y="350" width="6" height="48" rx="3" ry="3" fill="#45a685"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1512.0" y="371.2">講座マッピン</tspan><tspan x="1512.0" y="384.8">グシステム</tspan></text></g>
+<g class="bldg" data-id="SCT" data-cat="training" tabindex="0"><rect x="1590" y="350" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#45a685" stroke-width="2" filter="url(#softShadow)"/><rect x="1590" y="350" width="6" height="48" rx="3" ry="3" fill="#45a685"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1654.0" y="378.0">SCT</tspan></text></g>
+<g class="bldg" data-id="CourseDB" data-cat="training" tabindex="0"><rect x="1306" y="412" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#45a685" stroke-width="2" filter="url(#softShadow)"/><rect x="1306" y="412" width="6" height="48" rx="3" ry="3" fill="#45a685"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1370.0" y="440.0">講座DB</tspan></text></g>
+<g class="bldg" data-id="Jukorireki" data-cat="training" tabindex="0"><rect x="1448" y="412" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#45a685" stroke-width="2" filter="url(#softShadow)"/><rect x="1448" y="412" width="6" height="48" rx="3" ry="3" fill="#45a685"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1512.0" y="440.0">受講履歴DB</tspan></text></g>
+<g class="bldg" data-id="CWS" data-cat="staff" tabindex="0"><rect x="1904" y="242" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#6b7c93" stroke-width="2" filter="url(#softShadow)"/><rect x="1904" y="242" width="6" height="48" rx="3" ry="3" fill="#6b7c93"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1968.0" y="270.0">CWS</tspan></text></g>
+<g class="bldg" data-id="COMPANY" data-cat="staff" tabindex="0"><rect x="2046" y="242" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#6b7c93" stroke-width="2" filter="url(#softShadow)"/><rect x="2046" y="242" width="6" height="48" rx="3" ry="3" fill="#6b7c93"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="2110.0" y="270.0">COMPANY</tspan></text></g>
+<g class="bldg" data-id="Concur" data-cat="expense" tabindex="0"><rect x="2226" y="242" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#d98a3d" stroke-width="2" filter="url(#softShadow)"/><rect x="2226" y="242" width="6" height="48" rx="3" ry="3" fill="#d98a3d"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="2290.0" y="270.0">Concur</tspan></text></g>
+<g class="bldg" data-id="Intramart" data-cat="contract" tabindex="0"><rect x="1904" y="356" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#5b7fd1" stroke-width="2" filter="url(#softShadow)"/><rect x="1904" y="356" width="6" height="48" rx="3" ry="3" fill="#5b7fd1"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1968.0" y="377.2">イントラ</tspan><tspan x="1968.0" y="390.8">マート</tspan></text></g>
+<g class="bldg" data-id="TalentCube" data-cat="info" tabindex="0"><rect x="2226" y="356" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#8ab13d" stroke-width="2" filter="url(#softShadow)"/><rect x="2226" y="356" width="6" height="48" rx="3" ry="3" fill="#8ab13d"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="2290.0" y="377.2">タレント</tspan><tspan x="2290.0" y="390.8">キューブ</tspan></text></g>
+<g class="bldg" data-id="KinroShishi" data-cat="staff" tabindex="0"><rect x="186" y="628" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#6b7c93" stroke-width="2" filter="url(#softShadow)"/><rect x="186" y="628" width="6" height="48" rx="3" ry="3" fill="#6b7c93"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="250.0" y="656.0">勤労の獅子</tspan></text></g>
+<g class="bldg" data-id="TalentPalette" data-cat="staff" tabindex="0"><rect x="328" y="628" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#6b7c93" stroke-width="2" filter="url(#softShadow)"/><rect x="328" y="628" width="6" height="48" rx="3" ry="3" fill="#6b7c93"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="392.0" y="649.2">タレント</tspan><tspan x="392.0" y="662.8">パレット</tspan></text></g>
+<g class="bldg" data-id="Marketo" data-cat="marketing" tabindex="0"><rect x="548" y="628" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#c9a227" stroke-width="2" filter="url(#softShadow)"/><rect x="548" y="628" width="6" height="48" rx="3" ry="3" fill="#c9a227"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="612.0" y="656.0">マルケト</tspan></text></g>
+<g class="bldg" data-id="Qualtrics" data-cat="marketing" tabindex="0"><rect x="690" y="628" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#c9a227" stroke-width="2" filter="url(#softShadow)"/><rect x="690" y="628" width="6" height="48" rx="3" ry="3" fill="#c9a227"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="754.0" y="649.2">クアルト</tspan><tspan x="754.0" y="662.8">リクス</tspan></text></g>
+<g class="bldg" data-id="GMO" data-cat="expense" tabindex="0"><rect x="910" y="628" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#d98a3d" stroke-width="2" filter="url(#softShadow)"/><rect x="910" y="628" width="6" height="48" rx="3" ry="3" fill="#d98a3d"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="974.0" y="656.0">GMO</tspan></text></g>
+<g class="bldg" data-id="RobotPayment" data-cat="expense" tabindex="0"><rect x="1052" y="628" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#d98a3d" stroke-width="2" filter="url(#softShadow)"/><rect x="1052" y="628" width="6" height="48" rx="3" ry="3" fill="#d98a3d"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1116.0" y="649.2">ロボットペ</tspan><tspan x="1116.0" y="662.8">イメント</tspan></text></g>
+<g class="bldg" data-id="SuperStreamNX" data-cat="expense" tabindex="0"><rect x="1194" y="628" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#d98a3d" stroke-width="2" filter="url(#softShadow)"/><rect x="1194" y="628" width="6" height="48" rx="3" ry="3" fill="#d98a3d"/><text class="bldg-label" fill="#243040" font-size="10.5"><tspan x="1258.0" y="656.0">SuperStreamNX</tspan></text></g>
+<g class="bldg" data-id="Aidemy" data-cat="trainsys" tabindex="0"><rect x="1414" y="628" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#a97b4a" stroke-width="2" filter="url(#softShadow)"/><rect x="1414" y="628" width="6" height="48" rx="3" ry="3" fill="#a97b4a"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1478.0" y="656.0">Aidemy</tspan></text></g>
+<g class="bldg" data-id="Udemy" data-cat="trainsys" tabindex="0"><rect x="1556" y="628" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#a97b4a" stroke-width="2" filter="url(#softShadow)"/><rect x="1556" y="628" width="6" height="48" rx="3" ry="3" fill="#a97b4a"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1620.0" y="656.0">Udemy</tspan></text></g>
+<g class="bldg" data-id="JMAM" data-cat="trainsys" tabindex="0"><rect x="1698" y="628" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#a97b4a" stroke-width="2" filter="url(#softShadow)"/><rect x="1698" y="628" width="6" height="48" rx="3" ry="3" fill="#a97b4a"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1762.0" y="656.0">JMAM</tspan></text></g>
+<g class="bldg" data-id="Manabi" data-cat="trainsys" tabindex="0"><rect x="1414" y="690" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#a97b4a" stroke-width="2" filter="url(#softShadow)"/><rect x="1414" y="690" width="6" height="48" rx="3" ry="3" fill="#a97b4a"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1478.0" y="718.0">manabi</tspan></text></g>
+<g class="bldg" data-id="GLOBIS" data-cat="trainsys" tabindex="0"><rect x="1556" y="690" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#a97b4a" stroke-width="2" filter="url(#softShadow)"/><rect x="1556" y="690" width="6" height="48" rx="3" ry="3" fill="#a97b4a"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1620.0" y="718.0">GLOBIS</tspan></text></g>
+<g class="bldg" data-id="MES" data-cat="training" tabindex="0"><rect x="1918" y="628" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#45a685" stroke-width="2" filter="url(#softShadow)"/><rect x="1918" y="628" width="6" height="48" rx="3" ry="3" fill="#45a685"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="1982.0" y="656.0">MES</tspan></text></g>
+<g class="bldg" data-id="MSX" data-cat="training" tabindex="0"><rect x="2060" y="628" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#45a685" stroke-width="2" filter="url(#softShadow)"/><rect x="2060" y="628" width="6" height="48" rx="3" ry="3" fill="#45a685"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="2124.0" y="656.0">MSX</tspan></text></g>
+<g class="bldg" data-id="SFC" data-cat="training" tabindex="0"><rect x="2202" y="628" width="128" height="48" rx="8" ry="8" fill="#ffffff" stroke="#45a685" stroke-width="2" filter="url(#softShadow)"/><rect x="2202" y="628" width="6" height="48" rx="3" ry="3" fill="#45a685"/><text class="bldg-label" fill="#243040" font-size="11.5"><tspan x="2266.0" y="656.0">SFC</tspan></text></g>
+<g class="titles" pointer-events="none"><text class="ward-title" fill="#63389e" x="184" y="172">メール管理</text><text class="ward-title" fill="#257b8c" x="184" y="306">通信監理</text><text class="ward-title" fill="#4a4aa0" x="184" y="440">データ管理</text><text class="ward-title" fill="#3b56a3" x="526" y="172">契約管理</text><text class="ward-title" fill="#ab3f57" x="526" y="306">顧客管理</text><text class="pref-title" x="784" y="184">PCA</text><text class="ward-title" fill="#ab3f57" x="792" y="218">顧客管理</text><text class="ward-title" fill="#3f5f75" x="808" y="264">自社システム</text><text class="ward-title" fill="#2b7a5e" x="1288" y="218">研修管理</text><text class="ward-title" fill="#3f5f75" x="1304" y="326">自社システム</text><text class="pref-title" x="1894" y="184">TPL</text><text class="ward-title" fill="#47566b" x="1902" y="218">社員管理</text><text class="ward-title" fill="#a8631f" x="2224" y="218">経費管理</text><text class="ward-title" fill="#3b56a3" x="1902" y="332">契約管理</text><text class="ward-title" fill="#63811e" x="2224" y="332">情報管理</text><text class="ward-title" fill="#47566b" x="184" y="604">社員管理</text><text class="ward-title" fill="#96780f" x="546" y="604">マーケティング管理</text><text class="ward-title" fill="#a8631f" x="908" y="604">経費管理</text><text class="ward-title" fill="#7c5228" x="1412" y="604">研修システム</text><text class="ward-title" fill="#2b7a5e" x="1916" y="604">研修管理</text></g>
+</svg>
+  </div>
+</div>
+<div class="legend">
+  <h2>業務カテゴリ（街区の色）</h2>
+  <div class="legend-grid">
+    <div class="legend-item"><span class="swatch" style="background:#ffe3ea;border-color:#d16b82"></span>顧客管理</div><div class="legend-item"><span class="swatch" style="background:#dff5ee;border-color:#45a685"></span>研修管理</div><div class="legend-item"><span class="swatch" style="background:#e3ecff;border-color:#5b7fd1"></span>契約管理</div><div class="legend-item"><span class="swatch" style="background:#ffead2;border-color:#d98a3d"></span>経費管理</div><div class="legend-item"><span class="swatch" style="background:#fff6cf;border-color:#c9a227"></span>マーケティング管理</div><div class="legend-item"><span class="swatch" style="background:#f1e3ff;border-color:#8a5bc9"></span>メール管理</div><div class="legend-item"><span class="swatch" style="background:#dbf6fb;border-color:#3aa7bd"></span>通信監理</div><div class="legend-item"><span class="swatch" style="background:#e8ecf3;border-color:#6b7c93"></span>社員管理</div><div class="legend-item"><span class="swatch" style="background:#e7e6fb;border-color:#6f6fc9"></span>データ管理</div><div class="legend-item"><span class="swatch" style="background:#eef7d6;border-color:#8ab13d"></span>情報管理</div><div class="legend-item"><span class="swatch" style="background:#f5e9d6;border-color:#a97b4a"></span>研修システム(外部)</div>
+  </div>
+  <h2>道路の種類（システム連携）</h2>
+  <div class="legend-roads">
+    <div class="ritem"><span class="rline" style="border-color:#5b6b7d"></span>一方向の連携</div>
+    <div class="ritem"><span class="rline" style="border-color:#b5651d;border-top-width:4px"></span>双方向の連携（相互連携）</div>
+    <div class="ritem"><span class="rline" style="border-color:#8a5bc9;border-top-style:dashed"></span>グループ全体への包括的な連携</div>
+  </div>
+  <div class="note">
+    ※ PCA・TPL は複数の業務カテゴリを内包する大区画（都道府県のようなイメージ）です。研修管理（MES/MSX/SFC）と社員管理（勤労の獅子/タレントパレット）の区画は、元図に明示的な接続線がないため、地図上では独立した街区として配置しています。
+  </div>
+</div>
+<footer>元データ: flowchart_TB_0831.txt（Mermaid flowchart）を基に自動レイアウト生成。</footer>
+<script>
+(function() {
+  var svg = document.getElementById('map');
+  var scaleWrap = document.getElementById('mapScale');
+  var scale = 1;
+  function applyScale() { scaleWrap.style.transform = 'scale(' + scale + ')'; }
+  document.getElementById('zoomIn').addEventListener('click', function() { scale = Math.min(scale + 0.15, 2.2); applyScale(); });
+  document.getElementById('zoomOut').addEventListener('click', function() { scale = Math.max(scale - 0.15, 0.4); applyScale(); });
+  document.getElementById('zoomReset').addEventListener('click', function() { scale = 1; applyScale(); });
+
+  var edges = Array.prototype.slice.call(svg.querySelectorAll('.edge'));
+  var bldgs = Array.prototype.slice.call(svg.querySelectorAll('.bldg'));
+
+  function clear() {
+    svg.classList.remove('hovering');
+    edges.forEach(function(e) { e.classList.remove('hl'); });
+    bldgs.forEach(function(b) { b.classList.remove('hl'); });
+  }
+
+  function highlight(id) {
+    svg.classList.add('hovering');
+    var related = new Set([id]);
+    edges.forEach(function(e) {
+      var s = e.getAttribute('data-source'), t = e.getAttribute('data-target');
+      if (s === id || t === id) {
+        e.classList.add('hl');
+        related.add(s); related.add(t);
+      } else {
+        e.classList.remove('hl');
+      }
+    });
+    bldgs.forEach(function(b) {
+      var bid = b.getAttribute('data-id');
+      if (related.has(bid)) b.classList.add('hl'); else b.classList.remove('hl');
+    });
+  }
+
+  bldgs.forEach(function(b) {
+    var id = b.getAttribute('data-id');
+    b.addEventListener('mouseenter', function() { highlight(id); });
+    b.addEventListener('focus', function() { highlight(id); });
+    b.addEventListener('mouseleave', clear);
+    b.addEventListener('blur', clear);
+  });
+})();
+</script>
+</body>
+</html>
